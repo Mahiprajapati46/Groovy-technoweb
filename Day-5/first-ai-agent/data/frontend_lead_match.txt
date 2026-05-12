@@ -1,0 +1,23 @@
+EXPERT FRONTEND ENGINEER - RAHUL VERMA
+Email: rahul.lead@example.com
+Location: Remote / Bangalore
+Exp: 10+ Years
+
+SUMMARY:
+Highly technical Frontend Lead with a passion for building scalable, high-performance web applications. Expert in React, TypeScript, and modern CSS-in-JS.
+
+CORE SKILLS:
+- Languages: JavaScript (ES6+), TypeScript, HTML5, CSS3/SCSS
+- Frameworks: React, Next.js, Redux, TailwindCSS, Styled Components
+- Tools: Webpack, Vite, Jest, Cypress, Git, Docker, AWS
+- Leadership: Mentored teams of 10+, architected complex state management systems.
+
+EXPERIENCE:
+Staff Software Engineer | TechGiant Corp | 2019 - Present
+- Led the migration of a legacy monolithic app to a micro-frontend architecture using React and Module Federation.
+- Improved application load time by 45% through advanced code-splitting and optimization.
+- Defined company-wide frontend standards and best practices.
+
+Senior Frontend Developer | StartupHub | 2015 - 2019
+- Built a real-time analytics dashboard using React and D3.js.
+- Implemented a design system used across 5 different product lines.

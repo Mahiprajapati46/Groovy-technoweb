@@ -1,0 +1,16 @@
+# Priya Patel - Junior Web Developer
+Email: priya.patel@example.com
+Phone: +91 99988 77766
+Location: Pune, India
+
+## Summary
+Passionate Junior Developer with 1 year of experience in building responsive web applications. Eager to learn and contribute to innovative projects.
+
+## Technical Skills
+- Frontend: HTML5, CSS3, JavaScript (ES6), Basic React
+- Tools: Git, VS Code
+
+## Experience
+**Junior Developer @ StartupX (2023 - Present)**
+- Assisted in building landing pages for clients.
+- Fixed CSS bugs and improved mobile responsiveness.

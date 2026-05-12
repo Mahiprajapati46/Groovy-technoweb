@@ -1,0 +1,21 @@
+# Rahul Sharma - Senior Full Stack Developer
+Email: rahul.sharma@example.com
+Phone: +91 98765 43210
+Location: Bangalore, India
+
+## Summary
+Experienced Full Stack Developer with 8+ years of expertise in React, Node.js, and AI integration. Proven track record of leading teams and delivering high-scale applications.
+
+## Technical Skills
+- Frontend: React, Redux, Next.js, Tailwind CSS
+- Backend: Node.js, Express, PostgreSQL, MongoDB
+- AI: OpenAI API, LangChain, Gemini API
+- DevOps: AWS, Docker, CI/CD
+
+## Experience
+**Lead Developer @ TechCorp (2020 - Present)**
+- Led a team of 15 developers to build a multi-vendor e-commerce platform.
+- Integrated AI chatbots reducing customer support tickets by 40%.
+
+**Senior Developer @ WebSolutions (2016 - 2020)**
+- Developed scalable microservices architecture using Node.js.

@@ -1,0 +1,35 @@
+# Dependency directories
+node_modules/
+
+# Build directories
+frontend/dist/
+frontend/dist-ssr/
+backend/dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+**/.env
+
+# Local resumes and uploads
+backend/uploads/
+*.pdf
+*.docx
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / System files
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

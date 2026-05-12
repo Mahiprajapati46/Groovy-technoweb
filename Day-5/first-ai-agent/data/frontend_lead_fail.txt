@@ -1,0 +1,22 @@
+JUNIOR ASPIRING DEVELOPER - KEVIN SMITH
+Email: kevin.beginner@example.com
+Exp: 2 Months (Internship)
+
+OBJECTIVE:
+Looking for my first job in software. I like computers and want to learn how to make websites.
+
+SKILLS:
+- Microsoft Word, Excel
+- Basic HTML (can make a heading and a paragraph)
+- Basic CSS (can change colors)
+- Typing speed: 40 WPM
+
+EDUCATION:
+High School Graduate - 2024
+
+PROJECTS:
+- My Personal Website: A simple page with my name and a picture of my dog.
+- Calculator: Made a calculator in Excel.
+
+INTERESTS:
+- Gaming, Watching Movies, Soccer.
