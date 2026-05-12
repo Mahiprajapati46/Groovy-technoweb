@@ -1,0 +1,12 @@
+# Dependency folders
+node_modules/
+.venv/
+venv/
+env/
+
+# Environment variables (API Keys)
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
