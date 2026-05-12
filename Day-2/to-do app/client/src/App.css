@@ -1,0 +1,35 @@
+.app-header {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  color: var(--brand-primary);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.app-header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.status-msg {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.status-msg.error {
+  color: var(--danger);
+  background: #fee2e2;
+  border-radius: var(--border-radius);
+  font-style: normal;
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+}
