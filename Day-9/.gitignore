@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+usage_logs.csv
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+test_working.js
