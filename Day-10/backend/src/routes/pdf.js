@@ -20,7 +20,7 @@ const upload = multer({
 });
 
 // Routes
-router.post('/upload', upload.single('pdf'), uploadPDF);
+router.post('/upload', upload.single('pdfFile'), uploadPDF);
 router.get('/status', getPDFStatus);
 router.get('/current', getCurrentPDF);
 

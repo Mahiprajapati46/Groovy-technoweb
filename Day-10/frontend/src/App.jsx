@@ -35,8 +35,8 @@ function App() {
             {pdfLoaded && pdfInfo && (
               <div className="card pdf-info-card" style={{ marginTop: '20px' }}>
                 <h3>✅ Document Ready</h3>
-                <p><strong>File:</strong> {pdfInfo.fileName}</p>
-                <p><strong>Pages:</strong> {pdfInfo.totalPages}</p>
+                <p><strong>File:</strong> {pdfInfo.data?.fileName || pdfInfo.fileName}</p>
+                <p><strong>Pages:</strong> {pdfInfo.data?.totalPages || pdfInfo.totalPages}</p>
               </div>
             )}
           </div>

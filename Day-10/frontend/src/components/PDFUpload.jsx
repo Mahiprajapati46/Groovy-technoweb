@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { uploadPDF } from '../services/api';
 
 export function PDFUpload({ onUploadSuccess }) {
   const [file, setFile] = useState(null);
@@ -24,18 +24,18 @@ export function PDFUpload({ onUploadSuccess }) {
     }
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append('pdf', file);
-
     try {
-      const response = await axios.post('/api/pdf/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const result = await uploadPDF(file);
       
       setFile(null);
-      onUploadSuccess(response.data.data);
+      onUploadSuccess(result);
     } catch (err) {
-      setError(err.response?.data?.error || 'System failure during upload');
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'System failure during upload';
+      setError(errorMessage);
     } finally {
       setUploading(false);
     }

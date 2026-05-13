@@ -16,20 +16,20 @@ async function getGroqClient() {
 
 export async function queryPDF(req, res) {
   try {
-    const { query } = req.body;
+    const { question, contextText } = req.body;
 
-    if (!query) {
-      return res.status(400).json({ error: 'Query is required' });
+    if (!question) {
+      return res.status(400).json({ error: 'Question is required' });
     }
 
     // Get stored PDF
     const pdf = getStoredPDF();
-    if (!pdf) {
-      return res.status(400).json({ error: 'No PDF loaded. Please upload a PDF first.' });
+    if (!pdf && !contextText) {
+      return res.status(400).json({ error: 'No context provided. Please upload a PDF first.' });
     }
 
-    // Format context
-    const context = formatContextForQuery(pdf.pages, query);
+    // Format context (use provided contextText or fallback to PDF parsing)
+    const context = contextText || formatContextForQuery(pdf.pages, question);
 
     // Call Groq API
     const systemPrompt = `You are a helpful assistant that answers questions about the provided document. 
@@ -37,7 +37,7 @@ When answering, always cite the page numbers where you found the information.
 Format citations as [Page X] at the end of relevant sentences.
 Be concise and accurate.`;
 
-    const userMessage = `Document context:\n\n${context}\n\nQuestion: ${query}`;
+    const userMessage = `Document context:\n\n${context}\n\nQuestion: ${question}`;
 
     const groqClient = await getGroqClient();
     const completion = await groqClient.chat.completions.create({
@@ -76,7 +76,7 @@ Be concise and accurate.`;
 
     res.json({
       success: true,
-      query,
+      question,
       answer,
       tokens: {
         input: inputTokens,
@@ -84,8 +84,8 @@ Be concise and accurate.`;
         total: inputTokens + outputTokens
       },
       cost: costRecord.totalCost || 0,
-      pagesSearched: pdf.pages.length,
-      documentName: pdf.fileName
+      pagesSearched: pdf ? pdf.pages.length : 0,
+      documentName: pdf ? pdf.fileName : 'Direct Query'
     });
   } catch (error) {
     console.error('Query error:', error);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { askQuestion } from '../services/api';
 
 export function QueryInterface({ pdfLoaded, onQuery }) {
   const [query, setQuery] = useState('');
@@ -26,20 +26,21 @@ export function QueryInterface({ pdfLoaded, onQuery }) {
     setError(null);
 
     try {
-      const response = await axios.post('/api/query/ask', { query });
+      const data = await askQuestion(query, ""); // contextText is empty as backend handles PDF context
       
       const aiMessage = { 
         role: 'ai', 
-        content: response.data.answer,
-        tokens: response.data.tokens?.total,
-        cost: response.data.cost,
-        pages: response.data.pagesSearched
+        content: data.answer,
+        tokens: data.tokens?.total,
+        cost: data.cost,
+        pages: data.pagesSearched
       };
       
       setMessages(prev => [...prev, aiMessage]);
-      if (onQuery) onQuery(response.data);
+      if (onQuery) onQuery(data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Intelligence engine is currently offline');
+      const errorData = err.response?.data?.error || err.message || 'Intelligence engine is currently offline';
+      setError(typeof errorData === 'object' ? JSON.stringify(errorData) : errorData);
       setMessages(prev => [...prev, { role: 'error', content: 'Connection failure. Please try again.' }]);
     } finally {
       setLoading(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { getCosts, resetCosts } from '../services/api';
 
 export function CostDisplay({ trigger }) {
   const [costs, setCosts] = useState({
@@ -19,8 +19,8 @@ export function CostDisplay({ trigger }) {
   const fetchCosts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/query/costs');
-      setCosts(response.data);
+      const data = await getCosts();
+      setCosts(data);
     } catch (err) {
       console.error('Telemetry fetch failure:', err);
     } finally {
@@ -32,7 +32,7 @@ export function CostDisplay({ trigger }) {
     if (!window.confirm('Are you sure you want to reset all telemetry data?')) return;
     
     try {
-      await axios.post('/api/query/costs/reset');
+      await resetCosts();
       setCosts({
         totalCalls: 0,
         totalTokens: 0,
