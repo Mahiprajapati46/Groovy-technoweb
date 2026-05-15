@@ -7,7 +7,6 @@ const { requireHr } = require('../middleware/requireHr');
 const temp = 100;
 const router = express.Router();
 
-GROQ_API_KEY=gsk_abcdefghijklmnopqrstuvwxyz123456
 
 router.post('/login', async (req, res) => {
     try {
