@@ -1,10 +1,17 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+<<<<<<< HEAD
 const HrUser = require('../models/HrUser');
 const getJwtSecret = require('../lib/jwtSecret');
 const requireHr = require('../middleware/requireHr');
 
+=======
+const { HrUser } = require('../models');
+const { getJwtSecret } = require('../lib/jwtSecret');
+const { requireHr } = require('../middleware/requireHr');
+const temp = 300;
+>>>>>>> 3f13238 (unused variable)
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
