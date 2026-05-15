@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { requireHr } = require('../middleware/requireHr');
-const { analyzeResumeText } = require('../lib/ai');
 
 /** Trigger an autonomous agent run */
 router.post('/run', requireHr, async (req, res) => {
@@ -51,7 +50,6 @@ router.delete('/runs', requireHr, async (req, res) => {
 async function processApplications(runId, jobId = null) {
     const run = await AgentRun.findById(runId);
     if (!run) {
-        console.error("Run not found:", runId);
         return;
     }
     try {
@@ -65,19 +63,8 @@ async function processApplications(runId, jobId = null) {
             query.status = { $in: ['draft', 'analyzed', 'pending_send'] };
         }
 
-        let targetLabel = 'all jobs';
-        if (jobId) {
-            const j = await AgentRun.findById(jobId);
-            if (j) targetLabel = `Job ${j.title}`;
-        }
-        
-        const apps = await Application.find(query);
-        
-        run.logs.push({ message: `Found ${apps.length} applications to review for ${targetLabel}.` });
-        await run.save();
-
         let processed = 0;
-        for (const app of apps) {
+        for (const app of await Application.find(query)) {
             run.logs.push({ message: `Reviewing candidate: ${app.candidateEmail}` });
             
             // 1. Analysis (Force re-analysis if jobId is provided or analysis is missing)
