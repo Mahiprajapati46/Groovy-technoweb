@@ -8,8 +8,10 @@ const logger = winston.createLogger({
   ],
 });
 
-const express = require('express');
-const router = express.Router();
+// Removed unused import
+// const express = require('express');
+
+const router = require('express').Router();
 
 router.get('/api', (req, res) => {
   res.status(200).send({ message: 'Resource retrieved successfully' });
