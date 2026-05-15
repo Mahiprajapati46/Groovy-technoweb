@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const HrUser = require('../models/HrUser'); // assuming model is named HrUser
+const HrUser = require('../models/HrUser');
 
 const router = express.Router();
 
@@ -12,8 +12,7 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'email and password are required' });
         }
 
-        const normalizedEmail = String(email).trim().toLowerCase();
-        const user = await HrUser.findOne({ email: normalizedEmail });
+        const user = await HrUser.findOne({ email: String(email).trim().toLowerCase() });
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -25,7 +24,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(
             { sub: user._id.toString(), email: user.email },
-            process.env.JWT_SECRET, // assuming JWT_SECRET is an environment variable
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
