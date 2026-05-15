@@ -1,5 +1,5 @@
 // Import the agent object from another module
-const httpAgent = require('./agent');
+const agent = require('./agent');
 
 // Define the httpAgent object
 const httpAgent = {
@@ -36,15 +36,6 @@ const httpAgent = {
     res.send('TRACE method implemented');
   },
 };
-
-// Remove the unnecessary methods
-delete httpAgent.disconnect;
-delete httpAgent.close;
-delete httpAgent.pause;
-delete httpAgent.resume;
-delete httpAgent.cancel;
-delete httpAgent.retry;
-delete httpAgent.timeout;
 
 // Export the httpAgent object
 module.exports = httpAgent;
