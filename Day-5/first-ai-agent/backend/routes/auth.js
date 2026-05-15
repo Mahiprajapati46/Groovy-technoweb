@@ -1,7 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const HrUser = require('../models/HrUser');
+const { HrUser } = require('../models');
+const { getJwtSecret } = require('../lib/jwtSecret');
 
 const router = express.Router();
 
@@ -12,19 +13,20 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'email and password are required' });
         }
 
-        const user = await HrUser.findOne({ email: String(email).trim().toLowerCase() });
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const user = await HrUser.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const match = await bcrypt.compare(password, user.passwordHash);
+        const match = await bcrypt.compare(String(password), user.passwordHash);
         if (!match) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         const token = jwt.sign(
             { sub: user._id.toString(), email: user.email },
-            process.env.JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: '7d' }
         );
 
@@ -43,19 +45,17 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', (_req, res) => {
     res.status(204).send();
 });
 
 router.get('/me', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+    const u = req.user;
     res.json({
-        id: req.user._id.toString(),
-        email: req.user.email,
-        name: req.user.name,
-        role: req.user.role
+        id: u._id.toString(),
+        email: u.email,
+        name: u.name,
+        role: u.role
     });
 });
 
