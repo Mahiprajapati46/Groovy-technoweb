@@ -10,7 +10,7 @@ router.post('/run', requireHr, async (req, res) => {
     let taskName = task || 'Autonomous Talent Pipeline Audit';
     
     if (jobId) {
-        const targetJob = await Job.findById(jobId);
+        const targetJob = await AgentRun.findById(jobId);
         if (targetJob) {
             taskName = `Job Audit: ${targetJob.title}`;
         }
@@ -67,7 +67,7 @@ async function processApplications(runId, jobId = null) {
 
         let targetLabel = 'all jobs';
         if (jobId) {
-            const j = await Job.findById(jobId);
+            const j = await AgentRun.findById(jobId);
             if (j) targetLabel = `Job ${j.title}`;
         }
         
@@ -84,11 +84,10 @@ async function processApplications(runId, jobId = null) {
             if (!app.analysis || jobId) {
                 run.logs.push({ message: `Analyzing resume for ${app.candidateEmail}...` });
                 try {
-                    const job = await Job.findById(app.job);
                     app.analysis = await analyzeResumeText(app.resumeText, {
-                        title: job?.title,
-                        description: job?.description,
-                        skills: job?.requiredSkills
+                        title: '',
+                        description: '',
+                        skills: []
                     });
                     app.candidateName = app.analysis.candidateName || app.candidateName;
                     app.emailSubject = app.analysis.emailSubject || '';
