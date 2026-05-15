@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const HrUser = require('../models/HrUser'); // Assuming model is named HrUser
+const HrUser = require('../models/HrUser');
 const getJwtSecret = require('../lib/jwtSecret');
 
 const router = express.Router();
@@ -44,7 +44,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/logout', (_req, res) => {
+router.post('/logout', (req, res) => {
     res.status(204).send();
 });
 
