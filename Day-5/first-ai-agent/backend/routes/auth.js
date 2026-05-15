@@ -1,9 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { HrUser } = require('../models');
-const { getJwtSecret } = require('../lib/jwtSecret');
-const { requireHr } = require('../middleware/requireHr');
+const HrUser = require('../models/HrUser');
+const getJwtSecret = require('../lib/jwtSecret');
 
 const router = express.Router();
 
@@ -27,7 +26,7 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { sub: user._id.toString(), email: user.email },
             getJwtSecret(),
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: '7d' }
         );
 
         res.json({
@@ -45,7 +44,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/logout', (_req, res) => {
+router.post('/logout', (req, res) => {
     res.status(204).send();
 });
 
