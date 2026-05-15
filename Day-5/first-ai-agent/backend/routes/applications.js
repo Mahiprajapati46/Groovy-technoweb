@@ -9,7 +9,6 @@ const { Application, Job } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
 const { sendEmail } = require('../lib/mailer');
 
-const temp = 300;
 // Setup Multer
 const upload = multer({
     dest: path.join(__dirname, '../uploads/'),
