@@ -1,4 +1,3 @@
-const express = require('express');
 const winston = require('winston');
 
 const logger = winston.createLogger({
@@ -9,6 +8,7 @@ const logger = winston.createLogger({
   ],
 });
 
+const express = require('express');
 const router = express.Router();
 
 router.get('/api', (req, res) => {
