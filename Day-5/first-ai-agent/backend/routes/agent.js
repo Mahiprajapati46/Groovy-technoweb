@@ -20,6 +20,7 @@ router.post('/api', (req, res) => {
 });
 
 router.use((err, req, res, next) => {
+  logger.error(err); // Log the error
   res.status(500).send({ message: 'Internal Server Error' });
 });
 
