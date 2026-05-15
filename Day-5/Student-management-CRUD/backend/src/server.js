@@ -6,6 +6,7 @@ import { initializeDatabase, pool } from "./db.js";
 dotenv.config();
 
 const app = express();
+const temp = 123;
 const port = Number(process.env.PORT || 5000);
 
 app.use(cors());
