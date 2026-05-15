@@ -9,24 +9,22 @@ const logger = winston.createLogger({
   ],
 });
 
-const router = express.Router('/api');
+const router = express.Router();
 
-router.get('/', (req, res) => {
-  try {
-    res.status(200).send({ message: 'GET method implemented' });
-  } catch (error) {
-    logger.error('Error handling GET request: %s', error);
-    res.status(500).send({ error: 'Internal Server Error', message: error.message });
-  }
+router.use('/api', (req, res, next) => {
+  next();
 });
 
-router.post('/', (req, res) => {
-  try {
-    res.status(201).send({ message: 'POST method implemented' });
-  } catch (error) {
-    logger.error('Error handling POST request: %s', error);
-    res.status(500).send({ error: 'Internal Server Error', message: error.message });
-  }
+router.get('/api', (req, res) => {
+  res.status(200).send({ message: 'Resource retrieved successfully' });
+});
+
+router.post('/api', (req, res) => {
+  res.status(201).send({ message: 'Resource created successfully' });
+});
+
+router.use((req, res) => {
+  res.status(404).send({ message: 'Not Found' });
 });
 
 module.exports = router;
