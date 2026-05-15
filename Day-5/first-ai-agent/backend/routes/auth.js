@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { HrUser } = require('../models');
 const { getJwtSecret } = require('../lib/jwtSecret');
-const { requireHr } = require('../middleware/requireHr');
 
 const router = express.Router();
 
@@ -28,7 +27,7 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { sub: user._id.toString(), email: user.email },
             getJwtSecret(),
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: '7d' }
         );
 
         res.json({
@@ -50,8 +49,8 @@ router.post('/logout', (_req, res) => {
     res.status(204).send();
 });
 
-router.get('/me', requireHr, (req, res) => {
-    const u = req.hrUser;
+router.get('/me', (req, res) => {
+    const u = req.user;
     res.json({
         id: u._id.toString(),
         email: u.email,
