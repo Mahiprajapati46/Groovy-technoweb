@@ -1,3 +1,4 @@
+```javascript
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -14,8 +15,8 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'email and password are required' });
         }
 
-        const normalizedEmail = String(email).trim().toLowerCase();
-        const user = await HrUser.findOne({ email: normalizedEmail });
+        const normalizedUserEmail = String(email).trim().toLowerCase();
+        const user = await HrUser.findOne({ email: normalizedUserEmail });
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -63,3 +64,4 @@ router.get('/me', requireHr, (req, res) => {
 });
 
 module.exports = router;
+```
