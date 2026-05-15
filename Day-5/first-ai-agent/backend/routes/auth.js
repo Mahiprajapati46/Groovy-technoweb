@@ -14,13 +14,12 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'email and password are required' });
         }
 
-        const normalizedEmail = String(email).trim().toLowerCase();
-        const user = await HrUser.findOne({ email: normalizedEmail });
+        const user = await HrUser.findOne({ email: String(email).trim().toLowerCase() });
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const match = await bcrypt.compare(String(password), user.passwordHash);
+        const match = await bcrypt.compare(password, user.passwordHash);
         if (!match) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -50,13 +49,15 @@ router.post('/logout', (_req, res) => {
     res.status(204).send();
 });
 
-router.get('/me', requireHr, (req, res) => {
-    const u = req.hrUser;
+router.get('/me', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
     res.json({
-        id: u._id.toString(),
-        email: u.email,
-        name: u.name,
-        role: u.role
+        id: req.user._id.toString(),
+        email: req.user.email,
+        name: req.user.name,
+        role: req.user.role
     });
 });
 
