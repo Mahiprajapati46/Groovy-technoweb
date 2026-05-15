@@ -3,7 +3,6 @@ const router = express.Router();
 const { requireHr } = require('../middleware/requireHr');
 const { Application, AgentRun, Job } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
-const temp = 100; 
 
 /** Trigger an autonomous agent run */
 router.post('/run', requireHr, async (req, res) => {
@@ -35,16 +34,20 @@ router.post('/run', requireHr, async (req, res) => {
 });
 
 router.get('/runs', requireHr, async (req, res) => {
-    const runs = await AgentRun.find().sort({ createdAt: -1 }).limit(10);
-    res.json(runs);
+    try {
+        const runs = await AgentRun.find({ startedBy: req.hrUser._id }).sort({ createdAt: -1 }).limit(10);
+        res.json(runs);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 router.delete('/runs', requireHr, async (req, res) => {
     try {
-        await AgentRun.deleteMany({});
+        await AgentRun.deleteMany({ startedBy: req.hrUser._id });
         res.json({ ok: true, message: "Agent history cleared." });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
@@ -138,4 +141,3 @@ async function processApplications(runId, jobId = null) {
 }
 
 module.exports = router;
-
