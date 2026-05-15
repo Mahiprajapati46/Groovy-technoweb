@@ -1,9 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { HrUser } = require('../models');
-const { getJwtSecret } = require('../lib/jwtSecret');
-const { requireHr } = require('../middleware/requireHr');
+const HrUser = require('../models/HrUser');
+const getJwtSecret = require('../lib/jwtSecret');
+const requireHr = require('../middleware/requireHr');
 
 const router = express.Router();
 
@@ -25,11 +25,10 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
         const token = jwt.sign(
             { sub: user._id.toString(), email: user.email },
             getJwtSecret(),
-            { expiresIn }
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
 
         res.json({
@@ -47,7 +46,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-/** Stateless JWT: client discards token. */
 router.post('/logout', (_req, res) => {
     res.status(204).send();
 });
