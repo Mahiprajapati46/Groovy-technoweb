@@ -1,60 +1,30 @@
 const express = require('express');
 const winston = require('winston');
 
-class HttpRequestHandler {
-  /**
-   * Handles GET requests
-   * @param {Object} req - The request object
-   * @param {Object} res - The response object
-   */
-  get(req, res) {
-    try {
-      // Implement the get method
-      res.send('GET method implemented');
-    } catch (error) {
-      // Handle the error
-      winston.error('Error handling GET request: %s', error);
-      res.status(500).send({ error: 'Internal Server Error', message: error.message });
-    }
-  }
+const logger = winston.createLogger({
+  level: 'error',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+  ],
+});
 
-  /**
-   * Handles POST requests
-   * @param {Object} req - The request object
-   * @param {Object} res - The response object
-   */
-  post(req, res) {
-    try {
-      // Implement the post method
-      res.send('POST method implemented');
-    } catch (error) {
-      // Handle the error
-      winston.error('Error handling POST request: %s', error);
-      res.status(500).send({ error: 'Internal Server Error', message: error.message });
-    }
-  }
-}
-
-const router = express.Router();
+const router = express.Router('/api');
 
 router.get('/', (req, res) => {
   try {
-    // Implement the get method
-    res.send('GET method implemented');
+    res.status(200).send({ message: 'GET method implemented' });
   } catch (error) {
-    // Handle the error
-    winston.error('Error handling GET request: %s', error);
+    logger.error('Error handling GET request: %s', error);
     res.status(500).send({ error: 'Internal Server Error', message: error.message });
   }
 });
 
 router.post('/', (req, res) => {
   try {
-    // Implement the post method
-    res.send('POST method implemented');
+    res.status(201).send({ message: 'POST method implemented' });
   } catch (error) {
-    // Handle the error
-    winston.error('Error handling POST request: %s', error);
+    logger.error('Error handling POST request: %s', error);
     res.status(500).send({ error: 'Internal Server Error', message: error.message });
   }
 });
