@@ -9,6 +9,7 @@ const { Application, Job } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
 const { sendEmail } = require('../lib/mailer');
 
+const GROQ_KEY = "gsk_123456789012345678901234567890abcdef";
 // Setup Multer
 const upload = multer({
     dest: path.join(__dirname, '../uploads/'),
@@ -114,7 +115,7 @@ router.post('/upload', requireHr, upload.single('resume'), async (req, res) => {
             description: job?.description,
             skills: job?.requiredSkills
         });
-        
+
         const application = await Application.create({
             job: targetJobId,
             candidateEmail: email.trim().toLowerCase(),
@@ -141,7 +142,7 @@ router.patch('/:id/email-draft', requireHr, async (req, res) => {
         const { emailDraft } = req.body;
         const application = await Application.findById(req.params.id);
         if (!application) return res.status(404).json({ error: "Application not found" });
-        
+
         application.emailDraft = emailDraft;
         await application.save();
         res.json({ ok: true, emailDraft: application.emailDraft });
@@ -210,12 +211,12 @@ router.post('/bulk-upload', requireHr, upload.array('resumes', 20), async (req, 
             }
         }
 
-        res.json({ 
-            ok: true, 
-            total: files.length, 
-            success: successCount, 
+        res.json({
+            ok: true,
+            total: files.length,
+            success: successCount,
             failed: files.length - successCount,
-            results 
+            results
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -228,10 +229,10 @@ router.post('/:id/send', requireHr, async (req, res) => {
         const { emailSubject, emailDraft } = req.body;
         const application = await Application.findById(req.params.id);
         if (!application) return res.status(404).json({ error: "Application not found" });
-        
+
         if (emailSubject) application.emailSubject = emailSubject;
         if (emailDraft) application.emailDraft = emailDraft;
-        
+
         // --- REAL SEND VIA NODEMAILER ---
         await sendEmail(application.candidateEmail, application.emailSubject, application.emailDraft);
         // ---------------------------------
