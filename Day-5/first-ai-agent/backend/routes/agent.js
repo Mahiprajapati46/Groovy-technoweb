@@ -13,7 +13,7 @@ class HttpRequestHandler {
       res.send('GET method implemented');
     } catch (error) {
       // Handle the error
-      winston.error('Error handling GET request:', error);
+      winston.error('Error handling GET request: %s', error);
       res.status(500).send({ error: 'Internal Server Error', message: error.message });
     }
   }
@@ -29,16 +29,34 @@ class HttpRequestHandler {
       res.send('POST method implemented');
     } catch (error) {
       // Handle the error
-      winston.error('Error handling POST request:', error);
+      winston.error('Error handling POST request: %s', error);
       res.status(500).send({ error: 'Internal Server Error', message: error.message });
     }
   }
 }
 
 const router = express.Router();
-const httpRequestHandler = new HttpRequestHandler();
 
-router.get('/', httpRequestHandler.get);
-router.post('/', httpRequestHandler.post);
+router.get('/', (req, res) => {
+  try {
+    // Implement the get method
+    res.send('GET method implemented');
+  } catch (error) {
+    // Handle the error
+    winston.error('Error handling GET request: %s', error);
+    res.status(500).send({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
+router.post('/', (req, res) => {
+  try {
+    // Implement the post method
+    res.send('POST method implemented');
+  } catch (error) {
+    // Handle the error
+    winston.error('Error handling POST request: %s', error);
+    res.status(500).send({ error: 'Internal Server Error', message: error.message });
+  }
+});
 
 module.exports = router;
