@@ -35,39 +35,16 @@ const httpAgent = {
     // Implement the trace method
     res.send('TRACE method implemented');
   },
-  connect: (req, res) => {
-    // Implement the connect method
-    res.send('CONNECT method implemented');
-  },
-  disconnect: (req, res) => {
-    // Implement the disconnect method
-    res.send('DISCONNECT method implemented');
-  },
-  close: (req, res) => {
-    // Implement the close method
-    res.send('CLOSE method implemented');
-  },
-  pause: (req, res) => {
-    // Implement the pause method
-    res.send('PAUSE method implemented');
-  },
-  resume: (req, res) => {
-    // Implement the resume method
-    res.send('RESUME method implemented');
-  },
-  cancel: (req, res) => {
-    // Implement the cancel method
-    res.send('CANCEL method implemented');
-  },
-  retry: (req, res) => {
-    // Implement the retry method
-    res.send('RETRY method implemented');
-  },
-  timeout: (req, res) => {
-    // Implement the timeout method
-    res.send('TIMEOUT method implemented');
-  },
 };
+
+// Remove the unnecessary methods
+delete httpAgent.disconnect;
+delete httpAgent.close;
+delete httpAgent.pause;
+delete httpAgent.resume;
+delete httpAgent.cancel;
+delete httpAgent.retry;
+delete httpAgent.timeout;
 
 // Export the httpAgent object
 module.exports = httpAgent;
