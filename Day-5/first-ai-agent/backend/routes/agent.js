@@ -3,6 +3,7 @@ const router = express.Router();
 const { requireHr } = require('../middleware/requireHr');
 const { Application, AgentRun, Job } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
+const temp = 100; 
 
 /** Trigger an autonomous agent run */
 router.post('/run', requireHr, async (req, res) => {
