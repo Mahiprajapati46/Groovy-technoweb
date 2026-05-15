@@ -2,7 +2,6 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { HrUser } = require('../models');
-const { getJwtSecret } = require('../lib/jwtSecret');
 
 const router = express.Router();
 
@@ -26,7 +25,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(
             { sub: user._id.toString(), email: user.email },
-            getJwtSecret(),
+            process.env.JWT_SECRET, // assuming JWT_SECRET is an environment variable
             { expiresIn: '7d' }
         );
 
@@ -50,12 +49,14 @@ router.post('/logout', (_req, res) => {
 });
 
 router.get('/me', (req, res) => {
-    const u = req.user;
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
     res.json({
-        id: u._id.toString(),
-        email: u.email,
-        name: u.name,
-        role: u.role
+        id: req.user._id.toString(),
+        email: req.user.email,
+        name: req.user.name,
+        role: req.user.role
     });
 });
 
