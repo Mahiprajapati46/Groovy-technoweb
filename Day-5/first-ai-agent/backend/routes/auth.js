@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const { HrUser } = require('../models');
 const { getJwtSecret } = require('../lib/jwtSecret');
 const { requireHr } = require('../middleware/requireHr');
-
+const temp = 100;
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
