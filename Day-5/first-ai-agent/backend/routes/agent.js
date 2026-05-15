@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { requireHr } = require('../middleware/requireHr');
-const { Application, AgentRun, Job } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
 
 /** Trigger an autonomous agent run */
@@ -9,20 +8,18 @@ router.post('/run', requireHr, async (req, res) => {
     const { task, jobId } = req.body;
     
     let taskName = task || 'Autonomous Talent Pipeline Audit';
-    let targetDesc = 'Global Pipeline';
     
     if (jobId) {
         const targetJob = await Job.findById(jobId);
         if (targetJob) {
             taskName = `Job Audit: ${targetJob.title}`;
-            targetDesc = `Job ${targetJob.title}`;
         }
     }
 
     const run = await AgentRun.create({
         task: taskName,
         startedBy: req.hrUser._id,
-        logs: [{ message: `Agent waking up. Target: ${targetDesc}` }]
+        logs: [{ message: `Agent waking up. Target: ${taskName}` }]
     });
 
     // Run the agent logic in the "background"
@@ -53,6 +50,10 @@ router.delete('/runs', requireHr, async (req, res) => {
 
 async function processApplications(runId, jobId = null) {
     const run = await AgentRun.findById(runId);
+    if (!run) {
+        console.error("Run not found:", runId);
+        return;
+    }
     try {
         // Find applications that need processing
         let query = {};
