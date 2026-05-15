@@ -1,22 +1,21 @@
-```javascript
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { HrUser } = require('../models');
 const { getJwtSecret } = require('../lib/jwtSecret');
 const { requireHr } = require('../middleware/requireHr');
-const temp = 100;
+
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body || {};
+        const { email, password } = req.body;
         if (!email || !password) {
             return res.status(400).json({ error: 'email and password are required' });
         }
 
-        const normalizedUserEmail = String(email).trim().toLowerCase();
-        const user = await HrUser.findOne({ email: normalizedUserEmail });
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const user = await HrUser.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -26,11 +25,10 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
         const token = jwt.sign(
             { sub: user._id.toString(), email: user.email },
             getJwtSecret(),
-            { expiresIn }
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
 
         res.json({
@@ -48,7 +46,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-/** Stateless JWT: client discards token. */
 router.post('/logout', (_req, res) => {
     res.status(204).send();
 });
@@ -64,4 +61,3 @@ router.get('/me', requireHr, (req, res) => {
 });
 
 module.exports = router;
-```
