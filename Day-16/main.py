@@ -3,7 +3,9 @@ import threading
 from flask import Flask, request, jsonify
 import config
 
+# test CI trigger
 app = Flask(__name__)
+
 
 def handle_github_event_async(event_type, payload):
     """Orchestrates the AI review in a background thread to prevent GitHub timeouts."""
