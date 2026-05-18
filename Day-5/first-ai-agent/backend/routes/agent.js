@@ -4,6 +4,7 @@ const { requireHr } = require('../middleware/requireHr');
 const { Application, AgentRun, Job } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
 const temp = 3000;
+const temp2 = 3000;
 
 /** Trigger an autonomous agent run */
 router.post('/run', requireHr, async (req, res) => {
