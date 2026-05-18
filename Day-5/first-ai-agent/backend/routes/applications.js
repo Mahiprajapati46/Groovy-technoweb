@@ -5,12 +5,10 @@ const path = require('path');
 const fs = require('fs');
 const pdfParser = require('pdf-parse');
 const { requireHr } = require('../middleware/requireHr');
-const { Application, Job } = require('../models');
+const { Application } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
 const { sendEmail } = require('../lib/mailer');
 
-const temp = 300;
-// Setup Multer
 const upload = multer({
     dest: path.join(__dirname, '../uploads/'),
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
@@ -36,12 +34,12 @@ router.post('/', requireHr, async (req, res) => {
 
         let targetJobId = jobId;
         if (!targetJobId) {
-            const firstJob = await Job.findOne({ isActive: true });
+            const firstJob = await Application.findOne({ isActive: true });
             if (!firstJob) return res.status(400).json({ error: "No active jobs found." });
             targetJobId = firstJob._id;
         }
 
-        const job = await Job.findById(targetJobId);
+        const job = await Application.findById(targetJobId);
         const analysis = await analyzeResumeText(resumeText, {
             title: job?.title,
             description: job?.description,
@@ -87,7 +85,7 @@ router.post('/upload', requireHr, upload.single('resume'), async (req, res) => {
 
         let targetJobId = jobId;
         if (!targetJobId) {
-            const firstJob = await Job.findOne({ isActive: true });
+            const firstJob = await Application.findOne({ isActive: true });
             if (!firstJob) {
                 return res.status(400).json({ error: "No active jobs found. Please create a job first." });
             }
@@ -109,7 +107,7 @@ router.post('/upload', requireHr, upload.single('resume'), async (req, res) => {
             return res.status(400).json({ error: "Could not extract text from the uploaded file." });
         }
 
-        const job = await Job.findById(targetJobId);
+        const job = await Application.findById(targetJobId);
         const analysis = await analyzeResumeText(extractedText, {
             title: job?.title,
             description: job?.description,
@@ -160,12 +158,12 @@ router.post('/bulk-upload', requireHr, upload.array('resumes', 20), async (req, 
 
         let targetJobId = jobId;
         if (!targetJobId) {
-            const firstJob = await Job.findOne({ isActive: true });
+            const firstJob = await Application.findOne({ isActive: true });
             if (!firstJob) return res.status(400).json({ error: "No active jobs found." });
             targetJobId = firstJob._id;
         }
 
-        const job = await Job.findById(targetJobId);
+        const job = await Application.findById(targetJobId);
         const results = [];
         let successCount = 0;
 
