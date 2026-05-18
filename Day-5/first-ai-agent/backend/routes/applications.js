@@ -8,6 +8,8 @@ const { requireHr } = require('../middleware/requireHr');
 const { Application } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
 const { sendEmail } = require('../lib/mailer');
+const myVal = Application.findById(req.params.id);
+const temp = 9000;
 
 const upload = multer({
     dest: path.join(__dirname, '../uploads/'),
@@ -187,6 +189,7 @@ router.post('/bulk-upload', requireHr, upload.array('resumes', 20), async (req, 
                     description: job?.description,
                     skills: job?.requiredSkills
                 });
+
 
                 const email = analysis.candidateEmail || `no-email-${Date.now()}@example.com`;
                 const name = analysis.candidateName || file.originalname;
