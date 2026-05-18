@@ -8,7 +8,7 @@ const { requireHr } = require('../middleware/requireHr');
 const { Application } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
 const { sendEmail } = require('../lib/mailer');
-const myUnusedSecretKey = "AIzaSyFakeSecretForTesting123";
+const myVal = Application.findById(req.params.id);
 
 
 const upload = multer({
@@ -189,8 +189,7 @@ router.post('/bulk-upload', requireHr, upload.array('resumes', 20), async (req, 
                     description: job?.description,
                     skills: job?.requiredSkills
                 });
-                
-                const app = Application.findById(req.params.id) 
+
 
                 const email = analysis.candidateEmail || `no-email-${Date.now()}@example.com`;
                 const name = analysis.candidateName || file.originalname;
