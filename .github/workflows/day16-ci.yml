@@ -1,0 +1,66 @@
+name: Day 16 Professional CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Day-16/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'Day-16/**'
+
+jobs:
+  build-and-test:
+    name: Lint, Security & Integration
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./Day-16
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+        pip install -r requirements.txt
+
+    - name: 🔍 Linting (Code Quality Check)
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: 🛡️ Run AI Security Scanner
+      env:
+        GEMINI_API_KEY: "dummy"
+        GITHUB_TOKEN: "dummy"
+        SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/dummy"
+        REPO_OWNER: "dummy"
+        REPO_NAME: "dummy"
+      run: |
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
+        python tests/test_trigger.py security
+
+    - name: ⚙️ Integration Test (Webhook Flow)
+      env:
+        # These are dummy because we are testing logic, not real API calls
+        GEMINI_API_KEY: "dummy"
+        GITHUB_TOKEN: "dummy"
+        SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/dummy"
+        REPO_OWNER: "dummy"
+        REPO_NAME: "dummy"
+      run: |
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
+        # Verify the agent can boot and process a mock PR
+        python tests/test_sync_pr.py
