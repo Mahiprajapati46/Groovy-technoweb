@@ -9,6 +9,16 @@ const { Application } = require('../models');
 const { analyzeResumeText } = require('../lib/ai');
 const { sendEmail } = require('../lib/mailer');
 
+<<<<<<< HEAD
+=======
+const temp = 300;
+
+const upload = multer({
+    dest: path.join(__dirname, '../uploads/'),
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+// Setup Multer
+>>>>>>> 6a8af71 (Added duplicate code)
 const upload = multer({
     dest: path.join(__dirname, '../uploads/'),
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
