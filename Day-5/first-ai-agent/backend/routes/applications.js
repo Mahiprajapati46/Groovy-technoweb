@@ -189,6 +189,8 @@ router.post('/bulk-upload', requireHr, upload.array('resumes', 20), async (req, 
                     description: job?.description,
                     skills: job?.requiredSkills
                 });
+                
+                const app = Application.findById(req.params.id) 
 
                 const email = analysis.candidateEmail || `no-email-${Date.now()}@example.com`;
                 const name = analysis.candidateName || file.originalname;
