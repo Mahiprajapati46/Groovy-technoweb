@@ -144,6 +144,15 @@ export default function App() {
                 const parsed = JSON.parse(data);
                 if (parsed.citations) {
                   setRetrievedSources(parsed.citations);
+                  if (parsed.token_usage) {
+                    setMessages((prev) => {
+                      const updated = [...prev];
+                      if (updated.length > 0) {
+                        updated[updated.length - 1].token_usage = parsed.token_usage;
+                      }
+                      return updated;
+                    });
+                  }
                 } else if (parsed.token !== undefined) {
                   botMessageText += parsed.token;
                   

@@ -93,6 +93,12 @@ export default function Message({ msg, onCitationClick }) {
       <div className="message-bubble">
         {isUser ? <span>{renderMarkdown(msg.text)}</span> : parseCitations(msg.text)}
       </div>
+      {!isUser && msg.token_usage && (
+        <div className="message-token-usage">
+          ⚡ Tokens: {msg.token_usage.total_tokens} (Prompt: {msg.token_usage.prompt_tokens} | Completion: {msg.token_usage.completion_tokens})
+        </div>
+      )}
     </div>
   );
 }
+

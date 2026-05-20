@@ -17,6 +17,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_event():
+    print("[API Startup] Pre-loading LlamaIndex vector store index...")
+    try:
+        rag_agent.get_index()
+        print("[API Startup] LlamaIndex vector store index loaded successfully into RAM.")
+    except Exception as e:
+        print(f"[API Startup] Warning during index pre-loading: {e}")
+
 # Request schema for Chat
 class ChatRequest(BaseModel):
     message: str
@@ -38,6 +47,7 @@ async def upload_files(files: list[UploadFile] = File(...)):
         raise HTTPException(status_code=400, detail="No files uploaded.")
 
     uploaded_files = []
+    file_paths = []
 
     for file in files:
         ext = os.path.splitext(file.filename)[1].lower()
@@ -50,16 +60,26 @@ async def upload_files(files: list[UploadFile] = File(...)):
         try:
             with open(file_path, "wb") as buffer:
                 buffer.write(await file.read())
-
-            # Incrementally add to LlamaIndex vector store
-            rag_agent.add_document(file_path)
+            file_paths.append(file_path)
             uploaded_files.append(file.filename)
         except Exception as e:
-            # If ingestion fails, delete the file and raise exception
-            if os.path.exists(file_path):
-                os.remove(file_path)
-            print(f"[API] Error uploading {file.filename}: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Failed to process {file.filename}: {str(e)}")
+            # Cleanup any files saved during this request
+            for path in file_paths:
+                if os.path.exists(path):
+                    os.remove(path)
+            print(f"[API] Error saving {file.filename}: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to save {file.filename}: {str(e)}")
+
+    if file_paths:
+        try:
+            # Ingest and embed all documents, then write to storage once
+            rag_agent.add_documents_batch(file_paths)
+        except Exception as e:
+            for path in file_paths:
+                if os.path.exists(path):
+                    os.remove(path)
+            print(f"[API] Error indexing batch: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to index files: {str(e)}")
 
     return {"message": f"Successfully uploaded and indexed {len(uploaded_files)} file(s).", "files": uploaded_files}
 
@@ -102,15 +122,13 @@ async def chat(request: ChatRequest):
             if token.startswith("\n__CITATIONS_METADATA__:"):
                 metadata_str = token.replace("\n__CITATIONS_METADATA__:", "")
                 try:
-                    sources = json.loads(metadata_str)
-                    yield f"data: {json.dumps({'citations': sources})}\n\n"
+                    payload = json.loads(metadata_str)
+                    yield f"data: {json.dumps({'citations': payload.get('citations', []), 'token_usage': payload.get('token_usage')})}\n\n"
                 except Exception as e:
                     print(f"[API] Citations parse error: {e}")
-                    yield f"data: {json.dumps({'citations': []})}\n\n"
+                    yield f"data: {json.dumps({'citations': [], 'token_usage': None})}\n\n"
             else:
                 yield f"data: {json.dumps({'token': token})}\n\n"
-            # Yield control to the event loop to flush bytes to the socket instantly
-            await asyncio.sleep(0.01)
             
     return StreamingResponse(
         event_generator(),

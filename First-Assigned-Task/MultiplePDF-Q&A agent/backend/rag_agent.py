@@ -108,6 +108,9 @@ _index = None
 # 3. Session Management
 _sessions = {}
 
+# 4. In-Memory Query Cache for Repeated Questions
+_query_cache = {}
+
 def get_session_data(session_id: str):
     """Retrieves or initializes session-specific data."""
     if session_id not in _sessions:
@@ -160,18 +163,39 @@ def get_index():
             _index.storage_context.persist(persist_dir=STORAGE_DIR)
     return _index
 
-def add_document(file_path: str):
+def clear_caches():
+    """Invalidates the query cache and resets the cached chat engines in active sessions."""
+    global _query_cache
+    print("[RAG Agent] Cleared in-memory query cache and cached chat engines.")
+    _query_cache.clear()
+    for session_id in _sessions:
+        if "chat_engine" in _sessions[session_id]:
+            del _sessions[session_id]["chat_engine"]
+
+def add_documents_batch(file_paths: list[str]):
+    """Ingests multiple documents in a single batch, persisting to storage only once."""
     index = get_index()
-    filename = os.path.basename(file_path)
-    reader = SimpleDirectoryReader(input_files=[file_path], file_extractor=get_custom_readers())
-    documents = reader.load_data()
-    for doc in documents:
-        doc.metadata["file_name"] = filename
-        index.insert(doc)
+    clear_caches()
+    
+    for file_path in file_paths:
+        filename = os.path.basename(file_path)
+        print(f"[RAG Agent] Indexing file: {filename}")
+        reader = SimpleDirectoryReader(input_files=[file_path], file_extractor=get_custom_readers())
+        documents = reader.load_data()
+        for doc in documents:
+            doc.metadata["file_name"] = filename
+            index.insert(doc)
+            
+    print(f"[RAG Agent] Persisting updated index for {len(file_paths)} files to disk...")
     index.storage_context.persist(persist_dir=STORAGE_DIR)
+
+def add_document(file_path: str):
+    """Ingests a single document (wrapper around batch ingestion)."""
+    add_documents_batch([file_path])
 
 def delete_document(filename: str):
     index = get_index()
+    clear_caches()
     ref_ids = set()
     for doc_id, doc in index.docstore.docs.items():
         if doc.metadata.get("file_name") == filename:
@@ -243,10 +267,12 @@ def get_uploaded_files():
     return files_list
 
 def create_chat_engine(session_id: str):
-    index = get_index()
     session_data = get_session_data(session_id)
-    
-    if not index.docstore.docs:
+    if "chat_engine" in session_data:
+        return session_data["chat_engine"]
+
+    index = get_index()
+    if not index or not index.docstore.docs:
         return None
         
     system_prompt = (
@@ -257,7 +283,7 @@ def create_chat_engine(session_id: str):
         "1. STRICT CONTEXT-ONLY: You must answer the user's question using ONLY the provided Context Information. If the question cannot be answered using the provided context, you MUST answer exactly: \"I cannot find that information in the uploaded documents.\" and nothing else.\n"
         "2. NO EXTERNAL KNOWLEDGE: Do not talk about things not mentioned in the context (like Virat Kohli, Abraham Lincoln, or general web topics). If the user asks about them, you must say: \"I cannot find that information in the uploaded documents.\"\n"
         "3. NO CITATION ON FAILURE: If you cannot find the answer and are replying with the \"NOT FOUND\" message, do NOT output any citation or [Source: ...] line.\n"
-        "4. CITATION ON SUCCESS: If and only if you found the answer in the context, end your response with exactly one line: [Source: <file_name>, Page: <page>].\n"
+        "4. SINGLE CITATION LINE AT THE END: If you found the answer, you must end your response with exactly one single citation line at the very end of the message (separated by a blank line). Do NOT place citation markers inline, inside list items, or after sentences. If the response uses information from multiple pages or files, combine them into one single line at the end separated by semicolons. Example: [Source: document.pdf, Page: 12; other.pdf, Page: 5].\n"
         "5. CONTEXT SWITCHING & PRONOUNS: Focus strictly on the retrieved context segments for the current turn. Use the conversation history only to resolve pronouns."
     )
     
@@ -310,9 +336,72 @@ def create_chat_engine(session_id: str):
         context_refine_prompt=PromptTemplate(custom_context_refine_prompt),
         verbose=False
     )
+    session_data["chat_engine"] = chat_engine
     return chat_engine
 
+def estimate_tokens(query_str: str, source_nodes: list, chat_history: list, response_text: str) -> dict:
+    """Calculates prompt and completion tokens using LlamaIndex's tokenizer."""
+    try:
+        tokenizer = Settings.tokenizer
+        
+        # 1. System Prompt Tokens (approximate static system prompt length of ~190 tokens)
+        system_tokens = 190
+        
+        # 2. Query Tokens
+        query_tokens = len(tokenizer(query_str))
+        
+        # 3. Context Tokens
+        context_tokens = 0
+        if source_nodes:
+            for node in source_nodes:
+                context_tokens += len(tokenizer(node.node.get_content()))
+                
+        # 4. Chat History Tokens
+        history_tokens = 0
+        if chat_history:
+            for msg in chat_history:
+                if hasattr(msg, "content") and msg.content:
+                    history_tokens += len(tokenizer(msg.content))
+                    
+        # Calculate prompt and completion tokens
+        prompt_tokens = system_tokens + query_tokens + context_tokens + history_tokens
+        completion_tokens = len(tokenizer(response_text))
+        
+        return {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens
+        }
+    except Exception as e:
+        print(f"[RAG Agent] Token estimation warning: {e}")
+        # Return fallback counts if tokenizer fails
+        fallback_prompt = (len(query_str) + (len(response_text) * 2)) // 4
+        return {
+            "prompt_tokens": fallback_prompt,
+            "completion_tokens": len(response_text) // 4,
+            "total_tokens": fallback_prompt + (len(response_text) // 4)
+        }
+
 async def query_agent_async(query_str: str, session_id: str = "default"):
+    import asyncio
+    import json
+    
+    # 1. Standardize query
+    normalized_query = query_str.strip().lower()
+    cache_key = (session_id, normalized_query)
+    
+    # 2. Check query cache
+    if cache_key in _query_cache:
+        cached_entry = _query_cache[cache_key]
+        print(f"[RAG Agent Cache] Serving cached response for: '{query_str}'")
+        for token in cached_entry["tokens"]:
+            yield token
+            # Yield with a very short sleep for a smooth typing animation
+            await asyncio.sleep(0.002)
+        yield cached_entry["citations"]
+        return
+
+    # If not cached, run actual pipeline
     chat_engine = create_chat_engine(session_id)
     if not chat_engine:
         yield "Please upload some files to start chatting!"
@@ -331,19 +420,46 @@ async def query_agent_async(query_str: str, session_id: str = "default"):
         else:
             print("  - No source nodes retrieved.")
             
+        collected_tokens = []
         async for token in response.async_response_gen():
+            collected_tokens.append(token)
             yield token
             
-        import json
+        # Compile response text for token estimation
+        full_response_text = "".join(collected_tokens)
+        
+        # Calculate citations metadata
         sources = []
-        for source_node in response.source_nodes:
+        source_nodes = response.source_nodes if hasattr(response, 'source_nodes') else []
+        for source_node in source_nodes:
             metadata = source_node.node.metadata
             sources.append({
                 "file_name": metadata.get("file_name"),
                 "page": metadata.get("page_label"),
                 "text": source_node.node.get_content()
             })
-        yield "\n__CITATIONS_METADATA__:" + json.dumps(sources)
+            
+        # Get chat history for token estimation
+        session_data = get_session_data(session_id)
+        chat_history = session_data["memory"].get() if "memory" in session_data else []
+        
+        # Estimate tokens used
+        token_usage = estimate_tokens(query_str, source_nodes, chat_history, full_response_text)
+        
+        # Yield citation payload along with token_usage
+        citations_payload = {
+            "citations": sources,
+            "token_usage": token_usage
+        }
+        citations_str = "\n__CITATIONS_METADATA__:" + json.dumps(citations_payload)
+        yield citations_str
+        
+        # Save to cache
+        _query_cache[cache_key] = {
+            "tokens": collected_tokens,
+            "citations": citations_str
+        }
+        
     except Exception as e:
         print(f"[RAG Agent] Error: {str(e)}")
         yield f"An error occurred during query generation: {str(e)}"
