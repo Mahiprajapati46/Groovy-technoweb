@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+llama-index
+llama-index-llms-gemini
+llama-index-embeddings-gemini
+llama-index-retrievers-bm25
+python-multipart
+pypdf
+python-dotenv
+llama-index-readers-file
+docx2txt
+
+

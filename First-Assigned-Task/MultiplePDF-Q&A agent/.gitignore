@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+ENV/
+env/
+backend/venv/
+backend/env/
+
+# Environment configurations (Contains sensitive API keys)
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# LlamaIndex Database Storage (Local Cache & Indexes)
+backend/storage/
+
+# User Uploaded Documents
+backend/data/*
+!backend/data/.gitkeep
+
+# Node.js dependencies & builds
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+
+# IDEs & System files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
