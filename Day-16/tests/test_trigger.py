@@ -57,8 +57,8 @@ def simulate_security_leak_event():
     leak_file_content = """
     # Mock application config
     DB_HOST = "localhost"
-    GEMINI_API_KEY = "AIzaSyA9zwSdmhHu9eGsmP4vJWGEFi9qvw15gPs"  # Secret leak!
-    SLACK_URL = "https://hooks.slack.com/services/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" # Webhook leak!
+    GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+    SLACK_URL = "YOUR_SLACK_WEBHOOK_URL"
     """
     
     leaks = scan_for_secrets_in_content(leak_file_content)
