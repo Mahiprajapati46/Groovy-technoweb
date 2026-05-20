@@ -1,4 +1,5 @@
 import os
+import hashlib
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,7 +41,8 @@ ALLOWED_EXTENSIONS = {".pdf", ".csv", ".xlsx", ".xls", ".doc", ".docx", ".txt", 
 @app.post("/api/upload")
 async def upload_files(files: list[UploadFile] = File(...)):
     """
-    Accepts multiple files, saves them to the ./data folder,
+    Accepts multiple files, validates that they do not contain duplicate content 
+    already present under another filename, saves them to the ./data folder, 
     and calls the RAG agent to incrementally index them.
     """
     if not files:
@@ -48,18 +50,36 @@ async def upload_files(files: list[UploadFile] = File(...)):
 
     uploaded_files = []
     file_paths = []
+    duplicate_errors = []
+
+    # Get the current mapping of file_hash -> file_name from indexed documents
+    hash_map = rag_agent.get_file_hash_map()
 
     for file in files:
         ext = os.path.splitext(file.filename)[1].lower()
         if ext not in ALLOWED_EXTENSIONS:
             continue
 
-        file_path = os.path.join(rag_agent.DATA_DIR, file.filename)
-
-        # Save file to disk
         try:
+            content = await file.read()
+            # Compute content hash in memory
+            file_hash = hashlib.sha256(content).hexdigest()
+
+            # Prevent duplicate content uploaded under a different filename
+            if file_hash in hash_map:
+                existing_filename = hash_map[file_hash]
+                if existing_filename != file.filename:
+                    duplicate_errors.append(
+                        f"File '{file.filename}' has the exact same content as already indexed file '{existing_filename}'."
+                    )
+                    continue
+
+            file_path = os.path.join(rag_agent.DATA_DIR, file.filename)
+
+            # Save file to disk
             with open(file_path, "wb") as buffer:
-                buffer.write(await file.read())
+                buffer.write(content)
+
             file_paths.append(file_path)
             uploaded_files.append(file.filename)
         except Exception as e:
@@ -69,6 +89,13 @@ async def upload_files(files: list[UploadFile] = File(...)):
                     os.remove(path)
             print(f"[API] Error saving {file.filename}: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to save {file.filename}: {str(e)}")
+
+    # If any files are duplicates, clean up saved files from this request and return 400 Bad Request
+    if duplicate_errors:
+        for path in file_paths:
+            if os.path.exists(path):
+                os.remove(path)
+        raise HTTPException(status_code=400, detail=" | ".join(duplicate_errors))
 
     if file_paths:
         try:

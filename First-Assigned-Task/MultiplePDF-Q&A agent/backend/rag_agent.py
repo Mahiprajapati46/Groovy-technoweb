@@ -2,6 +2,7 @@ import os
 import shutil
 import nest_asyncio
 import pandas as pd
+import hashlib
 nest_asyncio.apply()
 from dotenv import load_dotenv
 
@@ -172,28 +173,63 @@ def clear_caches():
         if "chat_engine" in _sessions[session_id]:
             del _sessions[session_id]["chat_engine"]
 
-def add_documents_batch(file_paths: list[str]):
-    """Ingests multiple documents in a single batch, persisting to storage only once."""
+def calculate_sha256(file_path: str) -> str:
+    """Calculates the SHA-256 hash of a file."""
+    sha256 = hashlib.sha256()
+    try:
+        with open(file_path, "rb") as f:
+            while chunk := f.read(8192):
+                sha256.update(chunk)
+        return sha256.hexdigest()
+    except Exception as e:
+        print(f"[RAG Agent] Error calculating hash for {file_path}: {e}")
+        return ""
+
+def get_file_hash_map() -> dict:
+    """
+    Returns a dictionary mapping file_hash -> file_name for all indexed files.
+    Also backfills file_hash in metadata for older indexed files if they exist on disk.
+    """
     index = get_index()
-    clear_caches()
+    hash_map = {}
+    docs_to_update = []
     
-    for file_path in file_paths:
-        filename = os.path.basename(file_path)
-        print(f"[RAG Agent] Indexing file: {filename}")
-        reader = SimpleDirectoryReader(input_files=[file_path], file_extractor=get_custom_readers())
-        documents = reader.load_data()
-        for doc in documents:
-            doc.metadata["file_name"] = filename
-            index.insert(doc)
+    if not index or not index.docstore.docs:
+        return hash_map
+        
+    for doc_id, doc in index.docstore.docs.items():
+        file_hash = doc.metadata.get("file_hash")
+        file_name = doc.metadata.get("file_name")
+        
+        if not file_name:
+            continue
             
-    print(f"[RAG Agent] Persisting updated index for {len(file_paths)} files to disk...")
-    index.storage_context.persist(persist_dir=STORAGE_DIR)
+        if not file_hash:
+            # Backfill by calculating hash of physical file
+            physical_path = os.path.join(DATA_DIR, file_name)
+            if os.path.exists(physical_path):
+                try:
+                    file_hash = calculate_sha256(physical_path)
+                    if file_hash:
+                        doc.metadata["file_hash"] = file_hash
+                        docs_to_update.append(doc)
+                except Exception as e:
+                    print(f"[RAG Agent] Error backfilling hash for {file_name}: {e}")
+                    
+        if file_hash:
+            hash_map[file_hash] = file_name
+            
+    if docs_to_update:
+        print(f"[RAG Agent] Backfilled file hashes for {len(docs_to_update)} doc nodes in storage.")
+        index.storage_context.persist(persist_dir=STORAGE_DIR)
+        
+    return hash_map
 
-def add_document(file_path: str):
-    """Ingests a single document (wrapper around batch ingestion)."""
-    add_documents_batch([file_path])
-
-def delete_document(filename: str):
+def delete_index_nodes_only(filename: str):
+    """
+    Deletes index nodes and metadata associated with a file, without deleting the physical file.
+    Does NOT call persist() directly so that it can be called safely in a batch operation.
+    """
     index = get_index()
     clear_caches()
     ref_ids = set()
@@ -202,6 +238,7 @@ def delete_document(filename: str):
             parent_id = doc.ref_doc_id or doc.id_
             if parent_id:
                 ref_ids.add(parent_id)
+                
     for ref_id in ref_ids:
         # 1. Delete from vector store
         try:
@@ -229,12 +266,49 @@ def delete_document(filename: str):
         except Exception as e:
             pass
             
-    # Save index struct & persist
+    # Save index struct
     try:
         index._storage_context.index_store.add_index_struct(index._index_struct)
     except Exception as e:
         pass
+
+def add_documents_batch(file_paths: list[str]):
+    """Ingests multiple documents in a single batch, persisting to storage only once."""
+    index = get_index()
+    clear_caches()
+    
+    for file_path in file_paths:
+        filename = os.path.basename(file_path)
         
+        # Safe Overwrite: Clean up any old index nodes for this filename before re-indexing
+        delete_index_nodes_only(filename)
+        
+        print(f"[RAG Agent] Indexing file: {filename}")
+        reader = SimpleDirectoryReader(input_files=[file_path], file_extractor=get_custom_readers())
+        documents = reader.load_data()
+        
+        # Calculate content hash for duplicate detection
+        file_hash = calculate_sha256(file_path)
+        
+        for doc in documents:
+            doc.metadata["file_name"] = filename
+            if file_hash:
+                doc.metadata["file_hash"] = file_hash
+            index.insert(doc)
+            
+    print(f"[RAG Agent] Persisting updated index for {len(file_paths)} files to disk...")
+    index.storage_context.persist(persist_dir=STORAGE_DIR)
+
+def add_document(file_path: str):
+    """Ingests a single document (wrapper around batch ingestion)."""
+    add_documents_batch([file_path])
+
+def delete_document(filename: str):
+    """Deletes a document from the index and removes its physical file from disk."""
+    delete_index_nodes_only(filename)
+    
+    # Persist the changes
+    index = get_index()
     index.storage_context.persist(persist_dir=STORAGE_DIR)
     
     # Delete physical file
@@ -328,7 +402,7 @@ def create_chat_engine(session_id: str):
     )
 
     chat_engine = CondensePlusContextChatEngine.from_defaults(
-        retriever=index.as_retriever(similarity_top_k=6),
+        retriever=index.as_retriever(similarity_top_k=4),
         memory=session_data["memory"],
         system_prompt=system_prompt,
         condense_prompt=PromptTemplate(custom_condense_prompt),
